@@ -12,62 +12,89 @@ Problem ucztujących filozofów to klasyczny przykład w programowaniu współbi
 ## 🚀 Instalacja i uruchomienie
 
 ### Kompilacja
-```bash
+```
 g++ -std=c++11 -pthread philosophers.cpp -o philosophers
-
-### uruchomienie
+```
+### Uruchomienie 
+```
+  ./philosophers [liczba_filozofów]   (uruchomienie programu) 
+ ./philosophers 5    (przykład) 
+```
+## 🏗 Architektura rozwiązania
+# Główne komponenty
+- CustomMutex - własna implementacja mechanizmu blokady | Wykorzystuje std::atomic<bool> | Implementuje operacje lock() i unlock()|
+- Philosopher - klasa reprezentująca filozofa | Cykl życia: myślenie → jedzenie | Zarządza dostępem do widelców |
+- Strategia synchronizacji | Zapobieganie deadlockowi przez różną kolejność pobierania widelców | Filozofowie z parzystym ID: lewy → prawy | Filozofowie z nieparzystym ID: prawy → lewy |
+## 📊 Wyniki symulacji
 ```bash
-./philosophers [liczba_filozofów]
-Przykład : ./philosophers 5
+Starting simulation with 5 philosophers...
+Philosopher 0 is thinking.
+Philosopher 1 is thinking.
+Philosopher 2 is eating (1 meals).
+Philosopher 3 is thinking.
+Philosopher 4 is eating (1 meals).
+Philosopher 0 is eating (1 meals).
+Philosopher 2 is thinking.
+Philosopher 4 is thinking.
+Philosopher 1 is eating (1 meals).
+...
 
-### Architektura 
-Kluczowe komponenty
-CustomMutex - własna implementacja mechanizmu blokady
+Simulation results:
+Philosopher 0 ate 8 meals
+Philosopher 1 ate 7 meals
+Philosopher 2 ate 8 meals
+Philosopher 3 ate 7 meals
+Philosopher 4 ate 8 meals
+```
 
-Philosopher - klasa reprezentująca filozofa
+| Metryka                     | Wartość                          |
+|-----------------------------|----------------------------------|
+| Domyślny czas symulacji     | 10 sekund                        |
+| Minimalna liczba filozofów  | 2                                |
+| Maksymalna liczba filozofów | ograniczona zasobami systemu     |     
+| Strategia synchronizacji    | własny mutex (spinlock)          |
 
-Strategia deadlock-free - alternatywne pobieranie widelców
+## Wątki i sekcje krytyczne
 
-### Wątki i synchronizacja
+### Wątki w programie:
+- **Wątki filozofów** (klasa `Philosopher`)
+  - Każdy reprezentuje jednego filozofa przy stole
+  - Cykl życia: nieskończona pętla myślenie → jedzenie
+  - Zarządza własnymi widelcami (zasobami krytycznymi)
 
-Każdy filozof to osobny wątek (std::thread)
+- **Wątek główny** (`main`)
+  - Inicjalizuje i zarządza wątkami filozofów
+  - Kontroluje czas trwania symulacji
 
-Widelce chronione przez CustomMutex
+### Sekcje krytyczne i rozwiązania:
+1. **Dostęp do widelców**
+   - Problem: ryzyko zakleszczenia (deadlock)
+   - Rozwiązanie: asymetryczna kolejność pobierania widelców
 
-Zapobieganie deadlockowi przez różną kolejność pobierania widelców
+2. **Wyświetlanie stanu**
+   - Problem: wyścigi przy dostępie do cout
+   - Rozwiązanie: buforowanie komunikatów w stringstream
 
-### Wyniki Symulacji
-![image](https://github.com/user-attachments/assets/b358e6b5-0d67-4e82-9f6a-a0e5d0abc524)
-![image](https://github.com/user-attachments/assets/7a28c786-f470-4345-8a4b-b60a5478b34d)
+3. **Liczenie posiłków** 
+   - Problem: niespójność danych przy współbieżnej modyfikacji
+   - Rozwiązanie: atomic operations na licznikach
 
-Interpretacja wyników:
-Każdy wątek filozofa okresowo wypisuje swój stan
+## 📝 Podsumowanie Techniczne !
+**Kluczowe elementy implementacji**
+- CustomMutex: Własna implementacja mechanizmu synchronizacji
+- Philosopher: Klasa encapsulująca zachowanie filozofów
+- Strategia deadlock-free: Alternatywne pobieranie widelców
+- Bezpieczne wyjście: Wymuszone zakończenie po czasie symulacji
+ 
+**Statystyki**
+Program zbiera i wyświetla:
 
-Liczba w nawiasach oznacza ile posiłków zjadł dany filozof
-
-Po zakończeniu wyświetlane jest podsumowanie zjedzonych posiłków
-
-### Uwagi implementacyjne
-Parametry symulacji:
-
-Domyślny czas trwania: 10 sekund
-
-Minimalna liczba filozofów: 2
-
-Maksymalna liczba: ograniczona zasobami systemowymi
-
-Strategia synchronizacji:
-
-Własna implementacja mutexa (CustomMutex)
-
-Filozofowie z parzystym ID najpierw biorą lewy widelec
-
-Filozofowie z nieparzystym ID najpierw biorą prawy widelec
-
-Ograniczenia:
-
-Brak eleganckiego zakończenia wątków (wymuszone exit)
-
-Prosta implementacja blokady (spinlock)
-
-
+- Liczbę posiłków zjedzonych przez każdego filozofa
+- Czas trwania symulacji (ustalony na 10 sekund)
+**Ograniczenia**
+- Brak eleganckiego zakończenia wątków (wymuszone exit()
+- Prosta implementacja blokady (spinlock może marnować cykle CPU)
+  
+  ## 📝 Autor**
+  Kacper Kostrzewa
+  
